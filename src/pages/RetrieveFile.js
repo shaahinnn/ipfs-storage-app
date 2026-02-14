@@ -1,34 +1,233 @@
 // src/pages/RetrieveFile.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import CryptoJS from 'crypto-js';
 
 function RetrieveFile() {
   const [hash, setHash] = useState('');
-  const [fileUrl, setFileUrl] = useState('');
+  const [decryptionKey, setDecryptionKey] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleRetrieve = async () => {
+  // Preview State
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewType, setPreviewType] = useState('');
+  const [previewName, setPreviewName] = useState('');
+
+  const handleDownload = async (mode = 'view') => {
+    if (!hash) {
+      alert('Please enter an IPFS Hash');
+      return;
+    }
+
+    // specific checking if the user wants to decrypt or just download
+    if (!decryptionKey) {
+      // Standard download
+      window.location.href = `http://localhost:5000/download/${hash}`;
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setPreviewUrl(null);
+
     try {
-      const url = `https://ipfs.infura.io/ipfs/${hash}`;
-      setFileUrl(url);
-    } catch (error) {
-      console.error('Error retrieving file:', error);
+      // 1. Fetch the file content
+      const response = await axios.get(`http://localhost:5000/download/${hash}`, {
+        responseType: 'text', // Expecting the encrypted base64 string
+      });
+
+      const encryptedContent = response.data;
+
+      // 2. Decrypt
+      const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
+      const decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
+
+      if (!decryptedString) {
+        throw new Error('Decryption failed. Wrong key.');
+      }
+
+      let finalDataUrl = decryptedString;
+      let finalFilename = `decrypted-${hash}`;
+      let finalMime = 'application/octet-stream';
+
+      // Try to parse as JSON metadata payload
+      try {
+        const payload = JSON.parse(decryptedString);
+        if (payload.name && payload.data) {
+          finalDataUrl = payload.data;
+          finalFilename = payload.name;
+          finalMime = payload.type || finalMime;
+        }
+      } catch (e) {
+        // Not a JSON payload, assume old format (raw DataURL)
+        console.warn('Legacy encrypted file or raw data detected');
+      }
+
+      // 3. Convert DataURL to Blob
+      const arr = finalDataUrl.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : finalMime;
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const url = window.URL.createObjectURL(blob);
+
+      // 4. Handle Mode
+      if (mode === 'view') {
+        setPreviewUrl(url);
+        setPreviewType(mime);
+        setPreviewName(finalFilename);
+      } else {
+        // Download directly
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = finalFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError('Failed to retrieve or decrypt. Check the hash and password.');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const triggerDownload = () => {
+    if (!previewUrl) return;
+    const a = document.createElement('a');
+    a.href = previewUrl;
+    a.download = previewName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      window.URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewType('');
+    setPreviewName('');
+  };
+
+  const renderPreviewContent = () => {
+    if (!previewUrl) return null;
+
+    if (previewType.startsWith('image/')) {
+      return <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '60vh', borderRadius: '8px' }} />;
+    }
+    if (previewType.startsWith('video/')) {
+      return <video controls src={previewUrl} style={{ maxWidth: '100%', maxHeight: '60vh', borderRadius: '8px' }} />;
+    }
+    if (previewType.startsWith('audio/')) {
+      return <audio controls src={previewUrl} style={{ width: '100%' }} />;
+    }
+    if (previewType === 'application/pdf') {
+      return <iframe src={previewUrl} title="PDF Preview" style={{ width: '100%', height: '60vh', border: 'none', borderRadius: '8px' }} />;
+    }
+
+    // Fallback for text or other types
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+        <p>No preview available for this file type ({previewType}).</p>
+        <p>Please download to view.</p>
+      </div>
+    );
+  };
+
   return (
-    <div>
-      <h1>Retrieve File</h1>
-      <input
-        type="text"
-        value={hash}
-        onChange={(e) => setHash(e.target.value)}
-        placeholder="Enter IPFS Hash"
-      />
-      <button onClick={handleRetrieve}>Retrieve</button>
-      {fileUrl && (
-        <div>
-          <p>File available at:</p>
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">Download File</a>
+    <div className="glass-card">
+      <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Retrieve File</h2>
+
+      <div style={{ marginBottom: '2rem' }}>
+        <input
+          type="text"
+          value={hash}
+          onChange={(e) => setHash(e.target.value)}
+          placeholder="Enter IPFS Hash (Qm...)"
+          style={{ width: '100%', marginBottom: '1rem' }}
+        />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <label style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Decryption Password (If encrypted)</label>
+          <input
+            type="password"
+            placeholder="Enter password to decrypt..."
+            value={decryptionKey}
+            onChange={(e) => setDecryptionKey(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.8rem',
+              borderRadius: '8px',
+              border: '1px solid var(--glass-border)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: '#fff'
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <button
+          onClick={() => handleDownload('view')}
+          className="btn"
+          style={{ flex: 1 }}
+          disabled={loading}
+        >
+          {loading ? 'Processing...' : (decryptionKey ? 'Decrypt & View' : 'Download')}
+        </button>
+
+        {decryptionKey && (
+          <button
+            onClick={() => handleDownload('download')}
+            className="btn btn-secondary"
+            style={{ flex: 1 }}
+            disabled={loading}
+          >
+            {loading ? '...' : 'Decrypt & Download'}
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p style={{ color: '#ff4d4d', textAlign: 'center' }}>{error}</p>
+      )}
+
+      <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+        Note: Files are retrieved via your local IPFS node.
+      </p>
+
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 2000, backdropFilter: 'blur(5px)'
+        }}>
+          <div className="glass-card" style={{ width: '800px', maxWidth: '95%', margin: 0, position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem' }}>
+              Preview: {previewName}
+            </h3>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              {renderPreviewContent()}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button onClick={triggerDownload} className="btn" style={{ flex: 1 }}>Download File</button>
+              <button onClick={closePreview} className="btn btn-secondary" style={{ flex: 1 }}>Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

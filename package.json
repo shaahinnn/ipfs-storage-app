@@ -10,6 +10,7 @@
     "ajv-keywords": "^3.5.2",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "ipfs-http-client": "^56.0.2",
@@ -18,6 +19,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
     "react-scripts": "^3.0.1",
+    "react-toastify": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
