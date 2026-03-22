@@ -1,6 +1,7 @@
 // src/pages/Vault.js
 import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
+import { IconLock, IconCopy, IconFile } from '../components/Icons';
 
 function Vault() {
     const [vaultItems, setVaultItems] = useState([]);
@@ -13,6 +14,14 @@ function Vault() {
     const [previewType, setPreviewType] = useState('');
     const [previewName, setPreviewName] = useState('');
     const [showPreview, setShowPreview] = useState(false);
+
+    const [copiedIndex, setCopiedIndex] = useState(null);
+
+    const handleCopy = (hash, index) => {
+        navigator.clipboard.writeText(hash);
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+    };
 
     useEffect(() => {
         const items = JSON.parse(localStorage.getItem('vault_items') || '[]');
@@ -28,6 +37,20 @@ function Vault() {
         setShowPreview(false);
     };
 
+    const handleViewUnencrypted = (item) => {
+        setPreviewUrl(`http://localhost:5002/download/${item.hash}?type=view`);
+        const ext = (item.name || '').split('.').pop().toLowerCase();
+        let mime = 'application/octet-stream';
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) mime = 'image/' + ext;
+        else if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) mime = 'video/' + ext;
+        else if (['mp3', 'wav', 'aac'].includes(ext)) mime = 'audio/' + ext;
+        else if (ext === 'pdf') mime = 'application/pdf';
+        
+        setPreviewType(mime);
+        setPreviewName(item.name);
+        setShowPreview(true);
+    };
+
     const processDecryption = async (mode = 'view') => {
         if (!decryptionKey) {
             alert("Please enter the password.");
@@ -38,7 +61,7 @@ function Vault() {
 
         try {
             // 1. Fetch encrypted content from IPFS via backend
-            const response = await fetch(`http://localhost:5000/download/${selectedItem.hash}`);
+            const response = await fetch(`http://localhost:5002/download/${selectedItem.hash}`);
             if (!response.ok) throw new Error("Failed to fetch from IPFS");
 
             const encryptedContent = await response.text();
@@ -157,57 +180,133 @@ function Vault() {
         );
     };
 
+    const handleExport = () => {
+        if (vaultItems.length === 0) {
+            alert("Vault is empty. Nothing to export.");
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vaultItems));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "ipfs-vault-backup.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
+    const handleImport = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fileReader = new FileReader();
+        fileReader.readAsText(file, "UTF-8");
+        fileReader.onload = e => {
+            try {
+                const importedItems = JSON.parse(e.target.result);
+                if (Array.isArray(importedItems)) {
+                    // Merge and deduplicate by hash
+                    const currentHashes = new Set(vaultItems.map(i => i.hash));
+                    const newItems = importedItems.filter(i => !currentHashes.has(i.hash));
+                    const updatedVault = [...vaultItems, ...newItems];
+                    setVaultItems(updatedVault);
+                    localStorage.setItem('vault_items', JSON.stringify(updatedVault));
+                    alert(`Successfully imported ${newItems.length} new items!`);
+                } else {
+                    alert("Invalid backup file format. Expected a JSON array.");
+                }
+            } catch (error) {
+                alert("Error parsing backup file. Make sure it is a valid JSON.");
+            }
+        };
+        event.target.value = null; // reset input
+    };
+
     return (
         <div className="glass-card">
             <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Secure Vault</h2>
-            <p style={{ textAlign: 'center', color: 'var(--text-dim)', marginBottom: '2rem' }}>
+            <p style={{ textAlign: 'center', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
                 Your personal encrypted file history. Passwords are NOT stored here.
             </p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                <button onClick={handleExport} className="btn" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1.2rem', fontSize: '0.9rem', borderRadius: '8px' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    EXPORT VAULT
+                </button>
+                <label className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1.2rem', fontSize: '0.9rem', borderRadius: '8px', cursor: 'pointer', margin: 0 }}>
+                    <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    IMPORT VAULT
+                </label>
+            </div>
 
             {vaultItems.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>
                     <p>No items in vault yet. Upload a file and check "Save to Vault".</p>
                 </div>
             ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff', tableLayout: 'fixed' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--glass-border)', textAlign: 'left' }}>
-                            <th style={{ padding: '1rem', width: '50%' }}>File Name</th>
-                            <th style={{ padding: '1rem', width: '25%' }}>Date</th>
-                            <th style={{ padding: '1rem', width: '25%' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {vaultItems.map((item, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <td style={{
-                                    padding: '1rem',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis'
-                                }} title={item.name}>
-                                    {item.name}
-                                </td>
-                                <td style={{ padding: '1rem' }}>{item.date}</td>
-                                <td style={{ padding: '1rem' }}>
-                                    <button
-                                        onClick={() => handleDecrypt(item)}
-                                        className="btn btn-secondary"
-                                        style={{ padding: '5px 15px', fontSize: '0.9rem', marginRight: '10px' }}
-                                    >
-                                        Decrypt
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {vaultItems.map((item, index) => (
+                        <div key={index} className="vault-item-card" style={{ 
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                            padding: '1.2rem', background: 'rgba(255,255,255,0.02)', 
+                            borderRadius: '12px'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: 0 }}>
+                                <div style={{ padding: '0.8rem', background: item.isEncrypted !== false ? 'rgba(188, 19, 254, 0.1)' : 'rgba(0, 243, 255, 0.1)', borderRadius: '12px', color: item.isEncrypted !== false ? 'var(--primary-purple)' : 'var(--primary-cyan)' }}>
+                                    {item.isEncrypted !== false ? <IconLock size={24} /> : <IconFile size={24} />}
+                                </div>
+                                <div style={{ overflow: 'hidden' }}>
+                                    <h4 style={{ margin: '0 0 0.4rem 0', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '1rem', letterSpacing: '0.5px', textTransform: 'none' }}>{item.name}</h4>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{item.date}</span>
+                                        <div style={{ width: '4px', height: '4px', background: 'var(--glass-border)', borderRadius: '50%' }}></div>
+                                        <div 
+                                            className="hash-copy"
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', transition: 'all 0.3s ease' }} 
+                                            onClick={() => handleCopy(item.hash, index)}
+                                            title="Copy Hash"
+                                        >
+                                            {copiedIndex === index ? (
+                                                <span style={{ color: '#00e676', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    Copied!
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <IconCopy size={14} color="var(--primary-cyan)" />
+                                                    <span style={{ color: 'var(--primary-cyan)', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                                        {item.hash.substring(0, 8)}...{item.hash.substring(item.hash.length - 8)}
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginLeft: '1rem' }}>
+                                {item.isEncrypted !== false ? (
+                                    <button onClick={() => handleDecrypt(item)} className="btn" style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem', borderRadius: '8px' }}>
+                                        DECRYPT
                                     </button>
-                                    <button
-                                        onClick={() => deleteItem(index)}
-                                        style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', textDecoration: 'underline' }}
-                                    >
-                                        Remove
+                                ) : (
+                                    <button onClick={() => handleViewUnencrypted(item)} className="btn" style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem', borderRadius: '8px' }}>
+                                        VIEW
                                     </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                )}
+                                <button 
+                                    className="btn-delete-vault"
+                                    onClick={() => deleteItem(index)} 
+                                    style={{ border: 'none', color: '#ff4d4d', padding: '0.6rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }} 
+                                    title="Remove from Vault"
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
 
             {/* Decryption Password Modal (Show if selected but NO preview yet) */}

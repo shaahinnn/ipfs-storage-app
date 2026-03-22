@@ -3,9 +3,10 @@ const multer = require('multer');
 const fs = require('fs');
 const { create } = require('ipfs-http-client');
 const cors = require('cors');
+const os = require('os');
 
 const app = express();
-const port = 5000;
+const port = 5002;
 
 // IPFS client setup for local IPFS node
 const ipfs = create({ host: 'localhost', port: '5001', protocol: 'http' });
@@ -15,6 +16,19 @@ const upload = multer({ dest: 'uploads/' });
 
 app.use(cors());
 app.use(express.json());
+
+// Route to get local IPv4 address for LAN QR Code sharing
+app.get('/ip', (req, res) => {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return res.json({ ip: iface.address });
+      }
+    }
+  }
+  res.json({ ip: 'localhost' });
+});
 
 // Route for uploading files to IPFS
 app.post('/upload', upload.single('file'), async (req, res) => {

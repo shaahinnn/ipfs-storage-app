@@ -23,7 +23,7 @@ function RetrieveFile() {
     // specific checking if the user wants to decrypt or just download
     if (!decryptionKey) {
       // Standard download
-      window.location.href = `http://localhost:5000/download/${hash}`;
+      window.location.href = `http://localhost:5002/download/${hash}`;
       return;
     }
 
@@ -33,7 +33,7 @@ function RetrieveFile() {
 
     try {
       // 1. Fetch the file content
-      const response = await axios.get(`http://localhost:5000/download/${hash}`, {
+      const response = await axios.get(`http://localhost:5002/download/${hash}`, {
         responseType: 'text', // Expecting the encrypted base64 string
       });
 
@@ -150,15 +150,26 @@ function RetrieveFile() {
       <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Retrieve File</h2>
 
       <div style={{ marginBottom: '2rem' }}>
-        <input
-          type="text"
-          value={hash}
-          onChange={(e) => setHash(e.target.value)}
-          placeholder="Enter IPFS Hash (Qm...)"
-          style={{ width: '100%', marginBottom: '1rem' }}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <label style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>IPFS Hash</label>
+          <input
+            type="text"
+            value={hash}
+            onChange={(e) => setHash(e.target.value)}
+            placeholder="Enter IPFS Hash (Qm...)"
+            style={{
+              width: '100%', padding: '1rem', background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--glass-border)', color: 'white', borderRadius: '8px',
+              outline: 'none', transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--primary-cyan)'; }}
+            onMouseLeave={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--glass-border)'; }}
+            onFocus={e => { e.target.style.borderColor = 'var(--primary-cyan)'; e.target.style.boxShadow = '0 0 10px rgba(0, 243, 255, 0.2)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--glass-border)'; e.target.style.boxShadow = 'none'; }}
+          />
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '2rem' }}>
           <label style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Decryption Password (If encrypted)</label>
           <input
             type="password"
@@ -166,13 +177,14 @@ function RetrieveFile() {
             value={decryptionKey}
             onChange={(e) => setDecryptionKey(e.target.value)}
             style={{
-              width: '100%',
-              padding: '0.8rem',
-              borderRadius: '8px',
-              border: '1px solid var(--glass-border)',
-              background: 'rgba(255, 255, 255, 0.05)',
-              color: '#fff'
+              width: '100%', padding: '1rem', background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--glass-border)', color: 'white', borderRadius: '8px',
+              outline: 'none', transition: 'all 0.3s ease'
             }}
+            onMouseEnter={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--primary-cyan)'; }}
+            onMouseLeave={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--glass-border)'; }}
+            onFocus={e => { e.target.style.borderColor = 'var(--primary-cyan)'; e.target.style.boxShadow = '0 0 10px rgba(0, 243, 255, 0.2)'; }}
+            onBlur={e => { e.target.style.borderColor = 'var(--glass-border)'; e.target.style.boxShadow = 'none'; }}
           />
         </div>
       </div>
@@ -181,20 +193,35 @@ function RetrieveFile() {
         <button
           onClick={() => handleDownload('view')}
           className="btn"
-          style={{ flex: 1 }}
+          style={{ 
+              flex: 1, padding: '1rem', borderRadius: '8px', fontSize: '1rem', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem',
+              opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer'
+          }}
           disabled={loading}
         >
-          {loading ? 'Processing...' : (decryptionKey ? 'Decrypt & View' : 'Download')}
+          {loading ? (
+             <>PROCESSING...</>
+          ) : (
+             <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                {decryptionKey ? 'DECRYPT & VIEW' : 'RETRIEVE NOW'}
+             </>
+          )}
         </button>
 
         {decryptionKey && (
           <button
             onClick={() => handleDownload('download')}
             className="btn btn-secondary"
-            style={{ flex: 1 }}
+            style={{ 
+                flex: 1, padding: '1rem', borderRadius: '8px', fontSize: '1rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem',
+                opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer'
+            }}
             disabled={loading}
           >
-            {loading ? '...' : 'Decrypt & Download'}
+            {loading ? '...' : 'DECRYPT & DOWNLOAD'}
           </button>
         )}
       </div>

@@ -310,3 +310,29 @@ input[type="password"]:focus {
 .nav-links a.active::after {
   width: 100%;
 }
+
+/* Vault Specific Classes */
+.vault-item-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.vault-item-card:hover {
+  border-color: var(--primary-cyan);
+}
+
+.hash-copy {
+  opacity: 0.8 !important; /* fallback if inline styles override */
+}
+
+.hash-copy:hover {
+  opacity: 1 !important;
+}
+
+.btn-delete-vault {
+  background: rgba(255, 77, 77, 0.1) !important;
+}
+
+.btn-delete-vault:hover {
+  background: rgba(255, 77, 77, 0.2) !important;
+}

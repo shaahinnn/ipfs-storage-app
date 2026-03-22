@@ -8,7 +8,15 @@ import Gallery from './pages/Gallery';
 import RetrieveFile from './pages/RetrieveFile';
 import Vault from './pages/Vault';
 
+import LockScreen from './components/LockScreen';
+
 function App() {
+  const [isUnlocked, setIsUnlocked] = React.useState(sessionStorage.getItem('unlocked') === 'true');
+
+  if (!isUnlocked) {
+    return <LockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   return (
     <Router>
       <Layout>
