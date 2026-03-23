@@ -38,7 +38,10 @@ const Navbar = () => {
                 <div className="qr-modal-overlay" onClick={() => setShowQR(false)} style={{position: 'fixed', top:0, left:0, right:0, bottom:0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999}}>
                     <div className="qr-modal" onClick={e => e.stopPropagation()} style={{background: '#1a1a2e', padding: '2rem', borderRadius: '15px', textAlign: 'center'}}>
                         <h3 style={{color: 'white', marginBottom: '1rem'}}>LAN Access</h3>
-                        <p style={{color: 'var(--text-dim)', marginBottom: '1.5rem'}}>Scan to open on your phone</p>
+                        <p style={{color: 'var(--text-dim)', marginBottom: '1.5rem'}}>
+                            Scan to open on your phone<br/>
+                            <span style={{ color: '#ffbd3a', fontSize: '0.8rem' }}>(Ensure both devices are on the same Wi-Fi network)</span>
+                        </p>
                         <div style={{background: 'white', padding: '1rem', borderRadius: '10px', display: 'inline-block'}}>
                             <QRCodeSVG value={lanIp} size={200} />
                         </div>

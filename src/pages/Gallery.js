@@ -697,7 +697,10 @@ const Gallery = () => {
                         <div style={{ background: 'white', padding: '1rem', borderRadius: '8px', display: 'inline-block', marginBottom: '1.5rem' }}>
                             <QRCodeSVG value={`http://${localIp}:5002/download/${qrHash}`} size={200} />
                         </div>
-                        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Scan this code to download the file directly.</p>
+                        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                            Scan this code to download the file directly.<br/>
+                            <span style={{ color: '#ffbd3a', fontSize: '0.8rem' }}>(Ensure both devices are on the same Wi-Fi network)</span>
+                        </p>
                         <button onClick={() => setShowQRModal(false)} className="btn btn-secondary" style={{ width: '100%' }}>CLOSE</button>
                     </div>
                 </div>
