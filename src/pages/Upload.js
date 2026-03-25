@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
 import { IconCloud } from '../components/Icons';
+import { copyToClipboardFallback } from '../utils/clipboard';
 
 // Inline progress bar style injected once
 const PROGRESS_BAR_STYLE = `
@@ -229,7 +230,7 @@ function Upload() {
     }
   };
 
-  const copyToClipboard = (text) => { navigator.clipboard.writeText(text); };
+  const copyToClipboard = (text) => { copyToClipboardFallback(text).catch(err => console.error('Copy failed', err)); };
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem' }}>

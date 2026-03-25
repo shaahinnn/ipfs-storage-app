@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
 import { IconLock, IconCopy, IconFile } from '../components/Icons';
+import { copyToClipboardFallback } from '../utils/clipboard';
 
 function Vault() {
     const [vaultItems, setVaultItems] = useState([]);
@@ -18,7 +19,7 @@ function Vault() {
     const [copiedIndex, setCopiedIndex] = useState(null);
 
     const handleCopy = (hash, index) => {
-        navigator.clipboard.writeText(hash);
+        copyToClipboardFallback(hash).catch(err => console.error('Copy failed', err));
         setCopiedIndex(index);
         setTimeout(() => setCopiedIndex(null), 2000);
     };

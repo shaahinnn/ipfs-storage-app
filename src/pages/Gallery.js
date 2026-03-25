@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
 import { QRCodeSVG } from 'qrcode.react';
 import { IconFile, IconLock, IconFolder, IconCopy, IconTrash, IconDownload, IconQR } from '../components/Icons';
+import { copyToClipboardFallback } from '../utils/clipboard';
 
 const Gallery = () => {
     // === 1. Storage & Organization State ===
@@ -179,7 +180,7 @@ const Gallery = () => {
     const [copiedMenuHash, setCopiedMenuHash] = useState(null);
     const copyToClipboard = (text, e) => {
         if (e) e.stopPropagation();
-        navigator.clipboard.writeText(text);
+        copyToClipboardFallback(text).catch(err => console.error('Copy failed', err));
         setCopiedMenuHash(text);
         setTimeout(() => {
             setCopiedMenuHash(null);
