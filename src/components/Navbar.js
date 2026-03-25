@@ -10,7 +10,9 @@ const Navbar = () => {
     const [lanIp, setLanIp] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:5002/ip')
+        const portStr = window.location.port ? ':5002' : '';
+        const apiBase = `http://${window.location.hostname}${portStr}`;
+        fetch(`${apiBase}/ip`)
             .then(res => res.json())
             .then(data => setLanIp(`http://${data.ip}:3000`))
             .catch(() => setLanIp(''));

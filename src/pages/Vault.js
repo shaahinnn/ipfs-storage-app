@@ -38,7 +38,9 @@ function Vault() {
     };
 
     const handleViewUnencrypted = (item) => {
-        setPreviewUrl(`http://localhost:5002/download/${item.hash}?type=view`);
+        const portStr = window.location.port ? ':5002' : '';
+        const apiBase = `http://${window.location.hostname}${portStr}`;
+        setPreviewUrl(`${apiBase}/download/${item.hash}?type=view`);
         const ext = (item.name || '').split('.').pop().toLowerCase();
         let mime = 'application/octet-stream';
         if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) mime = 'image/' + ext;
@@ -57,21 +59,34 @@ function Vault() {
             return;
         }
 
-        setStatus('Fetching & Decrypting...');
+        setStatus('Fetching from IPFS...');
 
         try {
             // 1. Fetch encrypted content from IPFS via backend
-            const response = await fetch(`http://localhost:5002/download/${selectedItem.hash}`);
-            if (!response.ok) throw new Error("Failed to fetch from IPFS");
+            const portStr = window.location.port ? ':5002' : '';
+            const apiBase = `http://${window.location.hostname}${portStr}`;
+            const response = await fetch(`${apiBase}/download/${selectedItem.hash}`);
+            if (!response.ok) {
+                setStatus('Failed to fetch file from IPFS. Check your connection.');
+                return;
+            }
 
             const encryptedContent = await response.text();
+            setStatus('Decrypting...');
 
             // 2. Decrypt
-            const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
-            const decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
+            let decryptedString;
+            try {
+                const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
+                decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
+            } catch (e) {
+                setStatus('Decryption error. The file may be corrupted.');
+                return;
+            }
 
             if (!decryptedString) {
-                throw new Error('Wrong password or corrupted file.');
+                setStatus('Wrong password. Please try again.');
+                return;
             }
 
             // 3. Parse JSON Payload
@@ -124,8 +139,8 @@ function Vault() {
             setStatus(''); // Clear status
 
         } catch (err) {
-            console.error(err);
-            setStatus('Details: Decryption Failed. Wrong Password?');
+            console.error('Vault decrypt unexpected error:', err);
+            setStatus('An unexpected error occurred. Check the console.');
         }
     };
 

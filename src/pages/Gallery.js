@@ -68,6 +68,7 @@ const Gallery = () => {
     const [previewType, setPreviewType] = useState('');
     const [previewName, setPreviewName] = useState('');
     const [showPreview, setShowPreview] = useState(false);
+    const [loadingHash, setLoadingHash] = useState(null); // tracks which card is loading
 
     // Network IP for QR Sharing
     const [localIp, setLocalIp] = useState('localhost');
@@ -93,8 +94,9 @@ const Gallery = () => {
     };
 
     useEffect(() => {
-        // Fetch local IP on mount
-        fetch('http://localhost:5002/ip')
+        const portStr = window.location.port ? ':5002' : '';
+        const apiBase = `http://${window.location.hostname}${portStr}`;
+        fetch(`${apiBase}/ip`)
             .then(res => res.json())
             .then(data => setLocalIp(data.ip))
             .catch(() => setLocalIp('localhost'));
@@ -206,13 +208,6 @@ const Gallery = () => {
 
 
     // === Render Helpers ===
-    const getFileIcon = (filename) => {
-        const ext = filename.split('.').pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '📷';
-        if (['mp4', 'webm', 'ogg'].includes(ext)) return '🎥';
-        if (['pdf'].includes(ext)) return '📄';
-        return '📄';
-    };
 
     const isImage = (filename) => {
         const ext = filename.split('.').pop().toLowerCase();
@@ -253,14 +248,31 @@ const Gallery = () => {
 
     const processDecryption = async (mode = 'view') => {
         if (!decryptionKey) { alert("Please enter the decryption password."); return; }
-        setStatus('Decrypting...');
+        setStatus('Fetching from IPFS…');
         try {
-            const response = await fetch(`http://localhost:5002/download/${selectedItem.hash}`);
-            if (!response.ok) throw new Error("Failed to fetch from IPFS");
+            const portStr = window.location.port ? ':5002' : '';
+            const apiBase = `http://${window.location.hostname}${portStr}`;
+            const response = await fetch(`${apiBase}/download/${selectedItem.hash}`);
+            if (!response.ok) {
+                setStatus('Failed to fetch file from IPFS. Check your connection.');
+                return;
+            }
             const encryptedContent = await response.text();
-            const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
-            const decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
-            if (!decryptedString) throw new Error('Wrong password or corrupted file.');
+
+            setStatus('Decrypting…');
+            let decryptedString;
+            try {
+                const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
+                decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
+            } catch (e) {
+                setStatus('Decryption error. The file may be corrupted.');
+                return;
+            }
+
+            if (!decryptedString) {
+                setStatus('Wrong password. Please try again.');
+                return;
+            }
 
             let finalDataUrl = decryptedString;
             let finalFilename = selectedItem.name;
@@ -294,7 +306,9 @@ const Gallery = () => {
             }
             setStatus('');
         } catch (error) {
-            setStatus('Failed: Wrong Password?');
+            // Only reach here for unexpected JS errors (not network or decryption)
+            console.error('Decrypt error:', error);
+            setStatus('An unexpected error occurred. Check the console.');
         }
     };
 
@@ -313,11 +327,30 @@ const Gallery = () => {
         return 'application/octet-stream';
     };
 
-    const viewPlainFile = (file) => {
-        setPreviewUrl(`http://localhost:5002/download/${file.hash}?type=view`);
-        setPreviewType(getMimeType(file.name));
-        setPreviewName(file.name);
-        setShowPreview(true);
+    // View a plain (non-encrypted) file: fetch as blob so "Download File" actually saves
+    const viewPlainFile = async (file) => {
+        if (loadingHash) return; // prevent double-click
+        setLoadingHash(file.hash);
+        const portStr = window.location.port ? ':5002' : '';
+        const apiBase = `http://${window.location.hostname}${portStr}`;
+        try {
+            const response = await fetch(`${apiBase}/download/${file.hash}?type=view`);
+            if (!response.ok) throw new Error('Fetch failed');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            setPreviewType(getMimeType(file.name));
+            setPreviewName(file.name);
+            setShowPreview(true);
+        } catch (e) {
+            // Fallback: open directly in case blob creation fails
+            setPreviewUrl(`${apiBase}/download/${file.hash}?type=view`);
+            setPreviewType(getMimeType(file.name));
+            setPreviewName(file.name);
+            setShowPreview(true);
+        } finally {
+            setLoadingHash(null);
+        }
     };
 
     return (
@@ -481,15 +514,34 @@ const Gallery = () => {
                         >
                             {file.isEncrypted ? (
                                 <IconLock size={48} color="var(--text-dim)" />
+                            ) : loadingHash === file.hash ? (
+                                // Show spinner while fetching blob
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', color: 'var(--primary-cyan)' }}>
+                                    <svg width="36" height="36" viewBox="0 0 50 50" style={{ animation: 'spin 0.9s linear infinite' }}>
+                                        <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="94 32" />
+                                    </svg>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Loading...</span>
+                                </div>
                             ) : isImage(file.name) ? (
-                                <img src={`http://localhost:5002/download/${file.hash}?type=view`} alt={file.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.style.display = 'none'} />
+                                <img
+                                    src={(function(){
+                                        const portStr = window.location.port ? ':5002' : '';
+                                        return `http://${window.location.hostname}${portStr}/download/${file.hash}?type=view`;
+                                    })()}
+                                    alt={file.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                />
                             ) : isVideo(file.name) ? (
                                 <video
-                                    src={`http://localhost:5002/download/${file.hash}?type=view`}
+                                    src={(function(){
+                                        const portStr = window.location.port ? ':5002' : '';
+                                        return `http://${window.location.hostname}${portStr}/download/${file.hash}?type=view`;
+                                    })()}
                                     preload="metadata"
                                     muted
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
-                                    onError={(e) => e.target.style.display = 'none'}
+                                    onError={(e) => { e.target.style.display = 'none'; }}
                                 />
                             ) : (
                                 <IconFile size={48} color="var(--text-dim)" />
@@ -743,8 +795,20 @@ const Gallery = () => {
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                             <button onClick={() => {
-                                const a = document.createElement('a'); a.href = previewUrl; a.download = previewName;
-                                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                                if (previewUrl && previewUrl.startsWith('blob:')) {
+                                    // Blob URL — browser saves the file directly
+                                    const a = document.createElement('a');
+                                    a.href = previewUrl;
+                                    a.download = previewName;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                } else {
+                                    // HTTP URL fallback — force download via server
+                                    const portStr = window.location.port ? ':5002' : '';
+                                    const apiBase = `http://${window.location.hostname}${portStr}`;
+                                    window.location.href = `${apiBase}/download/${previewUrl.split('/download/')[1]?.split('?')[0]}`;
+                                }
                             }} className="btn">Download File</button>
                             <button onClick={closePreview} className="btn btn-secondary">Close Preview</button>
                         </div>
@@ -810,6 +874,10 @@ const Gallery = () => {
                 }
                 .ctx-item:hover {
                     background: rgba(255,255,255,0.05);
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to   { transform: rotate(360deg); }
                 }
             `}</style>
         </div>

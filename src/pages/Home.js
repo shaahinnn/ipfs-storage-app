@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { IconCloud, IconDownload, IconBox, IconLock, IconFile, IconKey, IconFolder } from '../components/Icons';
+import { IconCloud, IconBox, IconLock, IconFile, IconKey, IconFolder } from '../components/Icons';
 
 const Home = () => {
   const [stats, setStats] = useState({
@@ -26,7 +26,13 @@ const Home = () => {
       vaultEntries: vault.length,
       folders: folders.length
     });
+
+    const storedMetrics = JSON.parse(localStorage.getItem('perf_metrics') || '[]');
+    setPerfMetrics(storedMetrics);
   }, []);
+
+  const [perfMetrics, setPerfMetrics] = useState([]);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const total = stats.encryptedFiles + stats.plainFiles;
   const encryptedPercent = total > 0 ? (stats.encryptedFiles / total) * 100 : 0;
@@ -34,6 +40,39 @@ const Home = () => {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+      {showResetConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#111114', padding: '2.5rem', borderRadius: '16px', border: '1px solid rgba(255,77,77,0.3)', maxWidth: '400px', width: '90%', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.8)' }}>
+            <h3 style={{ color: '#ff4d4d', fontSize: '1.4rem', margin: '0 0 1rem 0', letterSpacing: '1px' }}>RESET GRAPH?</h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem', marginBottom: '2rem', lineHeight: '1.5' }}>
+              This will permanently clear all your historical upload performance metrics. This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('perf_metrics');
+                  setPerfMetrics([]);
+                  setShowResetConfirm(false);
+                }}
+                className="btn"
+                style={{ flex: 1, padding: '0.8rem', background: '#ff4d4d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 15px rgba(255,77,77,0.4)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header style={{ textAlign: 'center', marginBottom: '4rem', marginTop: '2rem' }}>
         <h1 style={{ fontSize: '4rem', fontWeight: '800', lineHeight: '1.2', margin: '0 0 1rem 0', letterSpacing: '2px' }}>
           DECENTRALIZED<br/>
@@ -106,7 +145,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section style={{ display: 'flex', justifyContent: 'center' }}>
+      <section style={{ display: 'flex', justifyContent: 'center', marginBottom: '4rem' }}>
         <div style={{ width: '400px', background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--glass-border)', transition: 'all 0.3s ease', cursor: 'default' }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,243,255,0.15)'; e.currentTarget.style.borderColor = 'var(--primary-cyan)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
@@ -133,6 +172,61 @@ const Home = () => {
              </div>
           ) : (
              <p style={{textAlign: 'center', color: 'var(--text-dim)', padding: '1rem 0'}}>No data available yet.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Custom Safe Performance Graph Section */}
+      <section style={{ display: 'flex', justifyContent: 'center', marginBottom: '4rem' }}>
+        <div style={{ width: '800px', maxWidth: '100%', background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--glass-border)', position: 'relative' }}>
+          {perfMetrics.length > 0 && (
+            <button 
+              onClick={() => setShowResetConfirm(true)}
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,77,77,0.1)', color: '#ff4d4d', border: '1px solid rgba(255,77,77,0.3)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', transition: 'all 0.3s ease', letterSpacing: '0.5px' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#ff4d4d'; e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = '#ff4d4d'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,77,77,0.1)'; e.currentTarget.style.color = '#ff4d4d'; e.currentTarget.style.borderColor = 'rgba(255,77,77,0.3)'; }}
+            >
+              Reset Graph
+            </button>
+          )}
+          <h3 style={{ textAlign: 'center', marginBottom: '0.5rem', color: 'white', fontWeight: '500' }}>Local Upload Performance Profiling</h3>
+          <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Processing Time vs. File Size (Encrypted vs Plain-text)</p>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem', fontSize: '0.8rem' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'white' }}><div style={{ width: '10px', height: '10px', background: 'var(--primary-cyan)', borderRadius: '2px' }}></div> Encrypted Upload</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'white' }}><div style={{ width: '10px', height: '10px', background: 'var(--primary-purple)', borderRadius: '2px' }}></div> Plain-Text Upload</span>
+          </div>
+
+          {perfMetrics.length > 0 ? (
+            (() => {
+              const recentMetrics = perfMetrics.slice(-20);
+              const maxTime = Math.max(...recentMetrics.map(x => x.timeMs));
+              return (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '250px', borderLeft: '1px solid rgba(255,255,255,0.2)', borderBottom: '1px solid rgba(255,255,255,0.2)', padding: '10px 10px 30px 10px', marginTop: '1rem' }}>
+                  {recentMetrics.map((m, i) => {
+                    const heightPct = maxTime === 0 ? 5 : (m.timeMs / maxTime) * 100;
+                    const sizeMb = (m.sizeBytes / 1048576).toFixed(2);
+                    const barColor = m.isEncrypted ? 'var(--primary-cyan)' : 'var(--primary-purple)';
+                    const typeLabel = m.isEncrypted ? 'Encrypted' : 'Plain Text';
+                    return (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }} title={`Type: ${typeLabel}\nSize: ${sizeMb} MB\nTime: ${(m.timeMs / 1000).toFixed(2)} s`}>
+                        <div style={{ width: '100%', height: `${heightPct}%`, background: barColor, borderRadius: '4px 4px 0 0', minHeight: '4px', transition: 'height 0.5s', cursor: 'pointer' }}
+                             onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.boxShadow = '0 0 10px #fff'; }} 
+                             onMouseLeave={e => { e.currentTarget.style.background = barColor; e.currentTarget.style.boxShadow = 'none'; }}>
+                        </div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '8px', whiteSpace: 'nowrap' }}>
+                          {sizeMb}MB
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          ) : (
+             <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dim)' }}>
+               Upload files to generate performance data.
+             </div>
           )}
         </div>
       </section>
