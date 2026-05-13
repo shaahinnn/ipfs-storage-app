@@ -424,7 +424,7 @@ The `useEffect` dependency array includes `[pin, onUnlock]`, meaning it re-runs 
 - The shake animation is a pure CSS `@keyframes` transform oscillating the X translation.
 - After 500ms, both the PIN and error state are reset, allowing another attempt with no rate limiting (by design for a local app).
 
-**PIN change flow (in `Gallery.js`):**
+**PIN change flow (in `SettingsModal.js`):**
 ```javascript
 if (!/^\d{4}$/.test(pinNewInput)) {
   setPinMessage({ type: 'error', text: 'New PIN must be exactly 4 digits.' });
@@ -433,6 +433,15 @@ if (!/^\d{4}$/.test(pinNewInput)) {
 localStorage.setItem('app_pin', pinNewInput);
 ```
 The regex `^\d{4}$` is anchored at both ends — it requires **exactly** 4 numeric digits, no more, no less.
+
+**Data Reset Flow:**
+The Settings Modal also provides a "Danger Zone" to completely wipe local state:
+```javascript
+localStorage.clear();
+sessionStorage.removeItem('unlocked');
+window.location.href = '/';
+```
+This forces a factory reset of the virtual file system without modifying the immutable IPFS network data.
 
 ---
 
