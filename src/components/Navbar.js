@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import SettingsModal from './SettingsModal';
 
 const Navbar = () => {
     const location = useLocation();
     const isActive = (path) => location.pathname === path ? 'active' : '';
     const [showQR, setShowQR] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const [lanIp, setLanIp] = useState('');
 
     useEffect(() => {
@@ -28,12 +30,17 @@ const Navbar = () => {
                     <Link to="/gallery" className={isActive('/gallery')}>Gallery</Link>
                     <Link to="/retrieve" className={isActive('/retrieve')}>Retrieve</Link>
                     <Link to="/vault" className={isActive('/vault')}>Secure Vault</Link>
-                    <Link to="/settings" className={isActive('/settings')}>Settings</Link>
-                    {lanIp && (
-                        <button className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--primary-cyan)', cursor: 'pointer', fontSize: '1.2rem'}} onClick={() => setShowQR(true)}>
-                            📱
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '1rem', marginLeft: '0.5rem' }}>
+                        {lanIp && (
+                            <button title="LAN Access QR" className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--primary-cyan)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem'}} onClick={() => setShowQR(true)}>
+                                📱
+                            </button>
+                        )}
+                        <button title="Settings" className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem'}} onClick={() => setShowSettings(true)}>
+                            ⚙️
                         </button>
-                    )}
+                    </div>
                 </div>
             </div>
 
@@ -58,6 +65,8 @@ const Navbar = () => {
                 </div>,
                 document.body
             )}
+
+            {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
         </nav>
     );
 };

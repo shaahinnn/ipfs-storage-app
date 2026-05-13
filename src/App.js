@@ -7,7 +7,6 @@ import Upload from './pages/Upload';
 import Gallery from './pages/Gallery';
 import RetrieveFile from './pages/RetrieveFile';
 import Vault from './pages/Vault';
-import Settings from './pages/Settings';
 
 import LockScreen from './components/LockScreen';
 
@@ -27,7 +26,6 @@ function App() {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/retrieve" element={<RetrieveFile />} />
           <Route path="/vault" element={<Vault />} />
-          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Layout>
     </Router>
