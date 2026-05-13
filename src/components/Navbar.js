@@ -28,6 +28,7 @@ const Navbar = () => {
                     <Link to="/gallery" className={isActive('/gallery')}>Gallery</Link>
                     <Link to="/retrieve" className={isActive('/retrieve')}>Retrieve</Link>
                     <Link to="/vault" className={isActive('/vault')}>Secure Vault</Link>
+                    <Link to="/settings" className={isActive('/settings')}>Settings</Link>
                     {lanIp && (
                         <button className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--primary-cyan)', cursor: 'pointer', fontSize: '1.2rem'}} onClick={() => setShowQR(true)}>
                             📱
