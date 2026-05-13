@@ -1,9 +1,6 @@
 # IPFS Secure Storage Application
 
-A decentralized, cryptographically private file management application built with React, Node.js, and IPFS (Pinata + Kubo).
-
-## Overview
-This application provides a modern Virtual File System with zero-knowledge AES-256 client-side encryption. Files are encrypted in the browser before being pinned to the IPFS network, ensuring complete privacy, censorship resistance, and immutability.
+Decentralized file storage web app using React, Node.js, and IPFS (Kubo). Eliminates single point of failure by distributing files across a peer-to-peer network. Supports secure upload, download, and retrieval via content-addressed CIDs, ensuring immutability, integrity, and high availability without centralized servers.
 
 ## 🚀 Getting Started
 

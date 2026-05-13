@@ -1,6 +1,7 @@
 {
   "name": "ipfs-storage-app",
   "version": "0.1.0",
+  "description": "Decentralized file storage web app using React, Node.js, and IPFS (Kubo). Eliminates single point of failure by distributing files across a peer-to-peer network. Supports secure upload, download, and retrieval via content-addressed CIDs, ensuring immutability, integrity, and high availability without centralized servers.",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
