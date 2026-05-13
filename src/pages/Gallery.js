@@ -29,38 +29,6 @@ const Gallery = () => {
     const [showQRModal, setShowQRModal] = useState(false);
     const [qrHash, setQrHash] = useState('');
 
-    // Change PIN Modal
-    const [showPinModal, setShowPinModal] = useState(false);
-    const [pinCurrentInput, setPinCurrentInput] = useState('');
-    const [pinNewInput, setPinNewInput] = useState('');
-    const [pinConfirmInput, setPinConfirmInput] = useState('');
-    const [pinMessage, setPinMessage] = useState(null); // { type: 'error'|'success', text }
-
-    const handleChangePin = () => {
-        const storedPin = localStorage.getItem('app_pin') || '1234';
-        if (pinCurrentInput !== storedPin) {
-            setPinMessage({ type: 'error', text: 'Current PIN is incorrect.' });
-            return;
-        }
-        if (!/^\d{4}$/.test(pinNewInput)) {
-            setPinMessage({ type: 'error', text: 'New PIN must be exactly 4 digits.' });
-            return;
-        }
-        if (pinNewInput !== pinConfirmInput) {
-            setPinMessage({ type: 'error', text: 'New PINs do not match.' });
-            return;
-        }
-        localStorage.setItem('app_pin', pinNewInput);
-        setPinMessage({ type: 'success', text: 'PIN updated successfully!' });
-        setTimeout(() => {
-            setShowPinModal(false);
-            setPinCurrentInput('');
-            setPinNewInput('');
-            setPinConfirmInput('');
-            setPinMessage(null);
-        }, 1500);
-    };
-
     // === 3. Decryption & Preview State ===
     const [selectedItem, setSelectedItem] = useState(null);
     const [decryptionKey, setDecryptionKey] = useState('');
@@ -405,21 +373,6 @@ const Gallery = () => {
                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                     >
                         +
-                    </button>
-                    <button
-                        onClick={() => {
-                            setPinCurrentInput('');
-                            setPinNewInput('');
-                            setPinConfirmInput('');
-                            setPinMessage(null);
-                            setShowPinModal(true);
-                        }}
-                        title="Change PIN"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--primary-cyan)', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,243,255,0.1)'; e.currentTarget.style.borderColor = 'var(--primary-cyan)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     </button>
                 </div>
             </div>
@@ -831,50 +784,6 @@ const Gallery = () => {
                 </div>
             )}
             
-            {/* Change PIN Modal */}
-            {showPinModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ background: '#1c1c1e', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', width: '420px', maxWidth: '95%' }}>
-                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'white', marginBottom: '0.5rem', fontSize: '1.2rem', textTransform: 'uppercase' }}>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            Change PIN
-                        </h3>
-                        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Enter your current PIN to set a new 4-digit PIN.</p>
-
-                        {[
-                            { label: 'Current PIN', value: pinCurrentInput, setter: setPinCurrentInput, placeholder: '••••' },
-                            { label: 'New PIN (4 digits)', value: pinNewInput, setter: setPinNewInput, placeholder: '••••' },
-                            { label: 'Confirm New PIN', value: pinConfirmInput, setter: setPinConfirmInput, placeholder: '••••' },
-                        ].map((field, i) => (
-                            <div key={i} style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '0.4rem' }}>{field.label}</label>
-                                <input
-                                    type="password"
-                                    maxLength={4}
-                                    placeholder={field.placeholder}
-                                    value={field.value}
-                                    onChange={e => field.setter(e.target.value.replace(/\D/g, '').slice(0,4))}
-                                    style={{ width: '100%', padding: '0.8rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'white', borderRadius: '8px', outline: 'none', fontSize: '1.1rem', letterSpacing: '0.3rem', transition: 'border-color 0.3s' }}
-                                    onFocus={e => e.target.style.borderColor = 'var(--primary-cyan)'}
-                                    onBlur={e => e.target.style.borderColor = 'var(--glass-border)'}
-                                />
-                            </div>
-                        ))}
-
-                        {pinMessage && (
-                            <p style={{ color: pinMessage.type === 'error' ? '#ff4d4d' : '#00e676', marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                {pinMessage.type === 'success' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-                                {pinMessage.text}
-                            </p>
-                        )}
-
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                            <button onClick={handleChangePin} className="btn" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px' }}>UPDATE PIN</button>
-                            <button onClick={() => setShowPinModal(false)} className="btn btn-secondary" style={{ flex: 1, padding: '0.8rem', borderRadius: '8px' }}>CANCEL</button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <style>{`
                 .ctx-item {
