@@ -1,70 +1,65 @@
-# Getting Started with Create React App
+# IPFS Secure Storage Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A decentralized, cryptographically private file management application built with React, Node.js, and IPFS (Pinata + Kubo).
 
-## Available Scripts
+## Overview
+This application provides a modern Virtual File System with zero-knowledge AES-256 client-side encryption. Files are encrypted in the browser before being pinned to the IPFS network, ensuring complete privacy, censorship resistance, and immutability.
 
-In the project directory, you can run:
+## 🚀 Getting Started
 
-### `npm start`
+Follow these steps to set up and run the project on your local machine.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Prerequisites
+- **Node.js** (v16 or higher)
+- **Git**
+- A free account on [Pinata.cloud](https://pinata.cloud/)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Installation & Setup
 
-### `npm test`
+**1. Clone the repository**
+```bash
+git clone https://github.com/shaahinnn/ipfs-storage-app.git
+cd ipfs-storage-app
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**2. Install Dependencies**
+Install the necessary packages for both the React frontend and Node backend:
+```bash
+npm install
+```
 
-### `npm run build`
+**3. Configure Environment Variables**
+The application requires your Pinata API credentials to upload files to the IPFS network.
+- Copy the `.env.example` file and rename it to `.env`.
+- Log in to your Pinata account, generate an API Key (JWT), and paste it into the `PINATA_JWT` field in your `.env` file.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**4. Setup Local IPFS Daemon (Kubo)**
+The startup script expects a local IPFS daemon to be present.
+- Download the IPFS Kubo executable for Windows from the [official IPFS releases page](https://github.com/ipfs/kubo/releases).
+- Extract the zip file and place the `ipfs.exe` file inside a new folder named `kubo` in the root of this project (`ipfs-storage-app/kubo/ipfs.exe`).
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Running the Application
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**1. Start the Project**
+For Windows users, we've provided an automated startup script that launches the IPFS Daemon, the Node.js backend, and the React frontend simultaneously:
+Right-click `start_project.ps1` and select **Run with PowerShell**, or run it from your terminal:
+```powershell
+.\start_project.ps1
+```
 
-### `npm run eject`
+**2. Access the Application**
+Once started, the application will be available at:
+- Frontend UI: `http://localhost:3000`
+- Backend API: `http://localhost:5002`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 📱 LAN / Cross-Device Access
+If you want to access the app from your mobile phone (on the same Wi-Fi network) using the in-app QR code scanner:
+1. Run PowerShell as an Administrator.
+2. Execute the firewall configuration script:
+```powershell
+.\allow_lan_access.ps1
+```
+This will open ports 3000 and 5002 on your Windows Defender Firewall to allow local network traffic.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📚 Documentation
+For a deep dive into the system architecture, security model, and implementation details, please read the [FINAL_PROJECT_DOCUMENTATION.md](./FINAL_PROJECT_DOCUMENTATION.md).
