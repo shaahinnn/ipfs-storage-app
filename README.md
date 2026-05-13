@@ -1,6 +1,6 @@
 # IPFS Secure Storage Application
 
-Decentralized file storage web app using React, Node.js, and IPFS (Kubo). Eliminates single point of failure by distributing files across a peer-to-peer network. Supports secure upload, download, and retrieval via content-addressed CIDs, ensuring immutability, integrity, and high availability without centralized servers.
+An end-to-end encrypted, decentralized storage application leveraging IPFS (Kubo & Pinata) to eliminate single points of failure. Designed with a React-based Virtual File System, it offers zero-knowledge privacy, seamless LAN sharing, and immutable data permanence without relying on traditional cloud providers.
 
 ## 🚀 Getting Started
 
