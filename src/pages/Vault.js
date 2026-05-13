@@ -73,6 +73,12 @@ function Vault() {
             }
 
             const encryptedContent = await response.text();
+            
+            if (!encryptedContent.trim().startsWith('U2FsdGVkX1')) {
+                setStatus('Error: Retrieved file is not a valid encrypted file (might be an error page).');
+                return;
+            }
+
             setStatus('Decrypting...');
 
             // 2. Decrypt
@@ -81,12 +87,16 @@ function Vault() {
                 const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
                 decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
             } catch (e) {
-                setStatus('Decryption error. The file may be corrupted.');
+                if (e.message === 'Malformed UTF-8 data') {
+                    setStatus('Incorrect password. Please try again.');
+                } else {
+                    setStatus('Decryption error. The file may be corrupted.');
+                }
                 return;
             }
 
             if (!decryptedString) {
-                setStatus('Wrong password. Please try again.');
+                setStatus('Incorrect password. Please try again.');
                 return;
             }
 

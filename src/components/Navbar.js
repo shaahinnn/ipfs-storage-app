@@ -42,7 +42,8 @@ const Navbar = () => {
                         <h3 style={{color: 'white', marginBottom: '1rem'}}>LAN Access</h3>
                         <p style={{color: 'var(--text-dim)', marginBottom: '1.5rem'}}>
                             Scan to open on your phone<br/>
-                            <span style={{ color: '#ffbd3a', fontSize: '0.8rem' }}>(Ensure both devices are on the same Wi-Fi network)</span>
+                            <span style={{ color: '#ffbd3a', fontSize: '0.8rem' }}>(Ensure both devices are on the same Wi-Fi network)</span><br/>
+                            <span style={{ color: 'var(--primary-cyan)', fontSize: '0.9rem', marginTop: '0.5rem', display: 'inline-block' }}>Default PIN: 1234</span>
                         </p>
                         <div style={{background: 'white', padding: '1rem', borderRadius: '10px', display: 'inline-block'}}>
                             <QRCodeSVG value={lanIp} size={200} />

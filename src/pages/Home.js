@@ -178,7 +178,10 @@ const Home = () => {
 
       {/* Custom Safe Performance Graph Section */}
       <section style={{ display: 'flex', justifyContent: 'center', marginBottom: '4rem' }}>
-        <div style={{ width: '800px', maxWidth: '100%', background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--glass-border)', position: 'relative' }}>
+        <div style={{ width: '800px', maxWidth: '100%', background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--glass-border)', position: 'relative', transition: 'all 0.3s ease', cursor: 'default' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,243,255,0.15)'; e.currentTarget.style.borderColor = 'var(--primary-cyan)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'var(--glass-border)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+        >
           {perfMetrics.length > 0 && (
             <button 
               onClick={() => setShowResetConfirm(true)}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
 import { QRCodeSVG } from 'qrcode.react';
-import { IconFile, IconLock, IconFolder, IconCopy, IconTrash, IconDownload, IconQR } from '../components/Icons';
+import { IconFile, IconLock, IconFolder, IconCopy, IconTrash, IconQR } from '../components/Icons';
 import { copyToClipboardFallback } from '../utils/clipboard';
 
 const Gallery = () => {
@@ -112,10 +112,15 @@ const Gallery = () => {
         const savedFolders = JSON.parse(localStorage.getItem('folders') || '[]');
         setFolders(savedFolders);
 
-        // Global click to close context menu
+        // Global click and scroll to close context menu
         const handleClick = () => setContextMenu(null);
+        const handleScroll = () => setContextMenu(null);
         window.addEventListener('click', handleClick);
-        return () => window.removeEventListener('click', handleClick);
+        window.addEventListener('scroll', handleScroll, true);
+        return () => {
+            window.removeEventListener('click', handleClick);
+            window.removeEventListener('scroll', handleScroll, true);
+        };
     }, []);
 
     // Helper: Save state to localStorage
@@ -259,6 +264,11 @@ const Gallery = () => {
                 return;
             }
             const encryptedContent = await response.text();
+            
+            if (!encryptedContent.trim().startsWith('U2FsdGVkX1')) {
+                setStatus('Error: Retrieved file is not a valid encrypted file (might be an error page).');
+                return;
+            }
 
             setStatus('Decrypting…');
             let decryptedString;
@@ -266,12 +276,16 @@ const Gallery = () => {
                 const decryptedBytes = CryptoJS.AES.decrypt(encryptedContent, decryptionKey);
                 decryptedString = decryptedBytes.toString(CryptoJS.enc.Utf8);
             } catch (e) {
-                setStatus('Decryption error. The file may be corrupted.');
+                if (e.message === 'Malformed UTF-8 data') {
+                    setStatus('Incorrect password. Please try again.');
+                } else {
+                    setStatus('Decryption error. The file may be corrupted.');
+                }
                 return;
             }
 
             if (!decryptedString) {
-                setStatus('Wrong password. Please try again.');
+                setStatus('Incorrect password. Please try again.');
                 return;
             }
 
@@ -570,7 +584,7 @@ const Gallery = () => {
             {/* Context Menu Dropdown */}
             {contextMenu && (
                 <div style={{
-                    position: 'absolute', top: contextMenu.y + 10, left: contextMenu.x - 140, width: '160px',
+                    position: 'fixed', top: contextMenu.y + 10, left: contextMenu.x - 140, width: '160px',
                     background: '#151515', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
                     boxShadow: '0 8px 30px rgba(0,0,0,0.8)', zIndex: 1000, overflow: 'hidden'
                 }} onClick={(e) => e.stopPropagation()}>
