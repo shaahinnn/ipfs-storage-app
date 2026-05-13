@@ -119,17 +119,28 @@ const SettingsModal = ({ onClose }) => {
                     
                     <button 
                         onClick={handleClearData} 
-                        className="btn" 
                         style={{ 
                             background: 'rgba(255, 77, 77, 0.1)', 
                             border: '1px solid rgba(255, 77, 77, 0.4)',
                             color: '#ff4d4d',
                             width: '100%',
                             padding: '0.8rem', 
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            fontFamily: "'Outfit', sans-serif",
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
                         }}
-                        onMouseOver={(e) => { e.target.style.background = 'rgba(255, 77, 77, 0.2)'; }}
-                        onMouseOut={(e) => { e.target.style.background = 'rgba(255, 77, 77, 0.1)'; }}
+                        onMouseOver={(e) => { 
+                            e.target.style.background = 'rgba(255, 77, 77, 0.2)'; 
+                            e.target.style.boxShadow = '0 0 15px rgba(255, 77, 77, 0.3)';
+                        }}
+                        onMouseOut={(e) => { 
+                            e.target.style.background = 'rgba(255, 77, 77, 0.1)'; 
+                            e.target.style.boxShadow = 'none';
+                        }}
                     >
                         CLEAR ALL LOCAL DATA
                     </button>
