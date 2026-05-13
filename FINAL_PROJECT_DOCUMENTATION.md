@@ -843,7 +843,30 @@ All application state is persisted in the browser's `localStorage` under the fol
 
 ---
 
-## 12. Conclusion
+## 12. Operational Automation & Utilities
+
+To streamline the development and execution of the IPFS Secure Storage App, several PowerShell scripts and JavaScript utilities have been implemented.
+
+### 12.1 Environment Setup (`start_project.ps1`)
+This script automates the complex multi-process startup sequence required for the application:
+1. **Cleanup**: Silently terminates any hanging `ipfs.exe` or `node.exe` processes to prevent EADDRINUSE errors.
+2. **IPFS Daemon**: Launches the local Kubo IPFS node (`ipfs daemon`) in a dedicated window.
+3. **Backend Server**: Starts the Node/Express proxy (`server.js`) on port 5002.
+4. **React Frontend**: Executes `npm start` to run the frontend application on port 3000.
+This ensures all three tiers of the architecture are running concurrently without requiring the user to open multiple terminal instances manually.
+
+### 12.2 LAN Firewall Configuration (`allow_lan_access.ps1`)
+To enable the **Cross-Device QR Code Sharing** feature, the host machine must accept inbound connections. This script, which requires Administrator privileges:
+- Adds Windows Firewall inbound rules for **Port 3000 (React)** and **Port 5002 (Express Backend)**.
+- Allows devices on the same Local Area Network (like a mobile phone) to access the UI and the proxy download routes seamlessly.
+
+### 12.3 Global Utilities (`Toast.js` & `clipboard.js`)
+- **`Toast.js`**: A custom, non-blocking notification component that slides in from the bottom of the screen. It provides real-time feedback (success, error, warning) for actions like copying a CID or saving a file.
+- **`clipboard.js`**: Abstracted utility for cross-browser clipboard interactions, ensuring that copying CIDs or URLs works consistently across desktop and mobile devices.
+
+---
+
+## 13. Conclusion
 
 The IPFS Secure Storage Application demonstrates a successful paradigm shift from centralized cloud storage to decentralized, cryptographically private file management. By abstracting the IPFS daemon's CLI complexity behind a polished React interface, the project makes Web3 technologies accessible to everyday users.
 
@@ -853,9 +876,10 @@ The combination of:
 - **Virtual File System** (folders + gallery without IPFS directories)
 - **Gateway waterfall retrieval** (resilient download from multiple gateways)
 - **Progressive Web App architecture** (cross-platform, installable)
+- **Operational Automation** (one-click deployment and LAN sharing)
 
 ...fulfills all objectives: privacy, immutability, usability, decentralization, and accessibility. The project definitively proves that the security and resilience of Web3 architectures can be achieved without sacrificing the intuitive user experience expected from modern Web2 applications.
 
 ---
 
-*Documentation last updated: 2026-03-23 | Version 1.1*
+*Documentation last updated: 2026-05-14 | Version 1.2*
