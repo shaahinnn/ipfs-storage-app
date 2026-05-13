@@ -24,21 +24,21 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="nav-content">
                 <Link to="/" className="logo">IPFS<span>.Store</span></Link>
-                <div className="nav-links">
+                <div className="nav-links" style={{ display: 'flex', alignItems: 'center' }}>
                     <Link to="/" className={isActive('/')}>Home</Link>
                     <Link to="/upload" className={isActive('/upload')}>Upload</Link>
                     <Link to="/gallery" className={isActive('/gallery')}>Gallery</Link>
                     <Link to="/retrieve" className={isActive('/retrieve')}>Retrieve</Link>
                     <Link to="/vault" className={isActive('/vault')}>Secure Vault</Link>
                     {lanIp && (
-                        <button title="LAN Access QR" className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--primary-cyan)', cursor: 'pointer', fontSize: '1.2rem', padding: '0 0.5rem', display: 'flex', alignItems: 'center'}} onClick={() => setShowQR(true)}>
+                        <button title="LAN Access QR" className="icon-btn" style={{ background: 'none', border: 'none', color: 'var(--primary-cyan)', cursor: 'pointer', fontSize: '1.2rem', padding: '0.5rem', marginLeft: '1.5rem', display: 'inline-flex', alignItems: 'center'}} onClick={() => setShowQR(true)}>
                             📱
                         </button>
                     )}
                     <button 
                         title="Settings" 
                         className="icon-btn" 
-                        style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 0.5rem', transition: 'color 0.3s' }} 
+                        style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '0.5rem', transition: 'color 0.3s', marginLeft: lanIp ? '0.5rem' : '1.5rem', display: 'inline-flex', alignItems: 'center' }} 
                         onClick={() => setShowSettings(true)}
                         onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-cyan)'}
                         onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-dim)'}
